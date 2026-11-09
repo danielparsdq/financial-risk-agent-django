@@ -1,0 +1,248 @@
+{% extends "admin/app_index.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" referrerpolicy="no-referrer">
+<style>
+    /* Estructura Base Expansiva */
+    #content {
+        display: flex !important;
+        flex-direction: row !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: transparent !important;
+        min-height: calc(100vh - 80px);
+    }
+
+    #content h1 { display: none !important; }
+
+    /* Nav Sidebar */
+    #content-main {
+        flex: 0 0 220px !important;
+        background: #ffffff !important;
+        border-right: 1px solid #d9e1ff;
+        padding: 20px !important;
+        margin: 0 !important;
+        overflow-y: auto;
+    }
+
+    #content-related { display: none !important; }
+
+    /* Dashboard Module */
+    .dashboard-wrapper {
+        flex: 1 !important;
+        background: #e6f2fe !important; 
+        padding: 35px !important;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+    }
+
+    .kpi-card, .chart-box {
+        background: #ffffff !important;
+        border: 1px solid #d9e1ff !important;
+        color: #002b49;
+        box-shadow: 1px 2px 7px 1px rgba(0, 12, 162, 0.19);
+    }
+    
+    .kpi-card .val, .chart-box h3 {
+        color: #002b49 !important;
+    }
+
+    .kpi-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+    }
+    .kpi-card {
+        padding: 20px;
+        border-radius: 20px;
+        text-align: center;
+        border-bottom: 4px solid #0037ff;
+    }
+    .kpi-card h4 { margin: 0; font-size: 11px; color: #5d6c7b; text-transform: uppercase; letter-spacing: 1px; }
+    .kpi-card .kpi-value {
+        margin: 8px 0 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+    .kpi-card .kpi-value i {
+        font-size: 18px;
+        color: inherit;
+    }
+    .kpi-card .val { font-size: 32px; font-weight: 800; display: block; line-height: 1; }
+
+    .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 25px;
+    }
+    .chart-box {
+        padding: 25px;
+        border-radius: 20px;
+        min-height: 400px;
+        display: flex;
+        flex-direction: column;
+    }
+    .chart-box h3 {
+        margin: 0 0 20px 0;
+        font-size: 14px;
+        font-weight: 600;
+        border-bottom: 1px solid #d9e1ff;
+        padding-bottom: 12px;
+        color: #002b49 !important;
+    }
+
+    .full-row { grid-column: 1 / -1; min-height: 300px; }
+
+
+    /* Tema Mobilvendor: tarjetas KPI con degradado y bordes suaves */
+    .kpi-card {
+        background: linear-gradient(148deg, #ffffff, #c9deff) !important;
+        border-top: none !important;
+        border-left: none !important;
+        border-right: none !important;
+    }
+    .chart-box { border: none !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    {% include "admin/app_list.html" with app_list=app_list %}
+</div>
+
+<div class="dashboard-wrapper">
+    <div class="kpi-row">
+        <div class="kpi-card" style="border-color: #0037ff;">
+            <h4>Total Auditorías</h4>
+            <div class="kpi-value" style="color: #0037ff;">
+                <i class="fa-solid fa-clipboard-list" aria-hidden="true"></i>
+                <span class="val" id="audit-total">-</span>
+            </div>
+        </div>
+        <div class="kpi-card" style="border-color: #e5484d;">
+            <h4>Riesgo Crítico</h4>
+            <div class="kpi-value" style="color: #e5484d;">
+                <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+                <span class="val" id="audit-risk">-</span>
+            </div>
+        </div>
+        <div class="kpi-card" style="border-color: #e0ac10;">
+            <h4>Detección PII</h4>
+            <div class="kpi-value" style="color: #e0ac10;">
+                <i class="fa-solid fa-user-shield" aria-hidden="true"></i>
+                <span class="val" id="audit-pii">-</span>
+            </div>
+        </div>
+        <div class="kpi-card" style="border-color: #18c86c;">
+            <h4>Tokens / Trans.</h4>
+            <div class="kpi-value" style="color: #18c86c;">
+                <i class="fa-solid fa-coins" aria-hidden="true"></i>
+                <span class="val" id="audit-tokens">-</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="charts-grid">
+        <div class="chart-box">
+            <h3>Distribución de Riesgo (EU AI Act)</h3>
+            <div style="flex:1"><canvas id="auditRiskChart"></canvas></div>
+        </div>
+        <div class="chart-box">
+            <h3>Bases Legales (LOPDP)</h3>
+            <div style="flex:1"><canvas id="auditLegalChart"></canvas></div>
+        </div>
+        <div class="chart-box">
+            <h3>Privacidad (PII Detection)</h3>
+            <div style="flex:1"><canvas id="auditPIIChart"></canvas></div>
+        </div>
+        <div class="chart-box">
+            <h3>Supervisión Humana (HITL)</h3>
+            <div style="flex:1"><canvas id="auditHumanChart"></canvas></div>
+        </div>
+        <div class="chart-box full-row">
+            <h3>Actividad por Agente IA</h3>
+            <div style="flex:1"><canvas id="auditAgentChart"></canvas></div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    async function loadAuditStats() {
+        try {
+            const res = await fetch('agenttransactionlog/api/data/');
+            const data = await res.json();
+            renderAuditDashboard(data);
+        } catch (e) {
+            console.error("Error cargando auditoría:", e);
+        }
+    }
+
+    function renderAuditDashboard(data) {
+        document.getElementById('audit-total').innerText = data.length;
+        document.getElementById('audit-risk').innerText = data.filter(d => d.ai_risk_level === 'high' || d.ai_risk_level === 'unacceptable').length;
+        document.getElementById('audit-pii').innerText = data.filter(d => d.pii_detected).length;
+        const avgTokens = data.reduce((a, b) => a + (b.token_usage || 0), 0) / (data.length || 1);
+        document.getElementById('audit-tokens').innerText = Math.round(avgTokens);
+
+        Chart.defaults.color = '#5d6c7b';
+        Chart.defaults.borderColor = '#d9e1ff';
+
+        const legalBasisLabels = {
+            consent: 'Consentimiento',
+            none_yet: 'Aún no definido',
+            legal_obligation: 'Obligación Legal',
+            public_interest: 'Interés Público/Tarea Administrativa',
+            pre_contractual: 'Fase Precontractual',
+            legitimate_interest: 'Interés Legítimo',
+            contract: 'Ejecución Contractual'
+        };
+
+        const agg = (data, key) => {
+            const res = {};
+            data.forEach(d => {
+                let val = d[key];
+                if (key === 'legal_basis') val = legalBasisLabels[val] || val;
+                res[val] = (res[val] || 0) + 1;
+            });
+            return { labels: Object.keys(res), values: Object.values(res) };
+        };
+
+        const config = (id, type, labels, values, colors, isBar = false) => new Chart(document.getElementById(id), {
+            type: type,
+            data: {
+                labels: labels,
+                datasets: [{ data: values, backgroundColor: colors, borderWidth: 0, label: 'Registros', borderRadius: 4 }]
+            },
+            options: { 
+                maintainAspectRatio: false, 
+                indexAxis: isBar ? 'y' : 'x',
+                plugins: { legend: { display: !isBar, position: 'bottom' } },
+                scales: isBar ? { x: { grid: { display: false } }, y: { grid: { display: false } } } : {}
+            }
+        });
+
+        const risk = agg(data, 'ai_risk_level');
+        config('auditRiskChart', 'doughnut', risk.labels, risk.values, ['#18c86c', '#e0ac10', '#ffa200', '#e5484d', '#5d6c7b']);
+
+        const legal = agg(data, 'legal_basis');
+        config('auditLegalChart', 'bar', legal.labels, legal.values, '#0037ff', true);
+
+        const pii = agg(data, 'pii_detected');
+        config('auditPIIChart', 'pie', pii.labels.map(l => l ? 'PII Detectado' : 'Sin PII'), pii.values, ['#e5484d', '#18c86c']);
+
+        const human = agg(data, 'human_oversight');
+        config('auditHumanChart', 'bar', human.labels.map(l => l ? 'HITL' : 'Autónomo'), human.values, '#00a0df');
+
+        const agents = agg(data, 'agent_name');
+        config('auditAgentChart', 'bar', agents.labels, agents.values, '#0037ff', true);
+    }
+    window.onload = loadAuditStats;
+</script>
+{% endblock %}

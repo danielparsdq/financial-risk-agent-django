@@ -1,0 +1,21 @@
+# Entornos virtuales
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.pyc
+
+# Secretos: nunca versionar
+.env
+.env.*
+!.env.example
+
+# Base de datos local y archivos generados
+sistema_xia/db.sqlite3
+sistema_xia/media/
+sistema_xia/staticfiles/
+models/
+
+# Sistema
+.DS_Store

@@ -1,0 +1,244 @@
+{% extends "admin/app_index.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" referrerpolicy="no-referrer">
+<style>
+    /* Estructura Base Expansiva */
+    #content {
+        display: flex !important;
+        flex-direction: row !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: transparent !important;
+        min-height: calc(100vh - 80px);
+    }
+
+    #content h1 { display: none !important; }
+
+    /* Nav Sidebar */
+    #content-main {
+        flex: 0 0 220px !important;
+        background: #ffffff !important;
+        border-right: 1px solid #d9e1ff;
+        padding: 20px !important;
+        margin: 0 !important;
+        overflow-y: auto;
+    }
+
+    /* Dashboard Module */
+    .dashboard-wrapper {
+        flex: 1 !important;
+        background: #e6f2fe !important; 
+        padding: 35px !important;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+    }
+
+    .kpi-card, .chart-box {
+        background: #ffffff !important;
+        border: 1px solid #d9e1ff !important;
+        color: #002b49;
+        box-shadow: 1px 2px 7px 1px rgba(0, 12, 162, 0.19);
+    }
+    
+    .kpi-card .val, .chart-box h3 {
+        color: #002b49 !important;
+    }
+
+    .kpi-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+    }
+    .kpi-card {
+        padding: 20px;
+        border-radius: 20px;
+        text-align: center;
+        border-bottom: 4px solid #18c86c;
+    }
+    .kpi-card h4 { margin: 0; font-size: 11px; color: #5d6c7b; text-transform: uppercase; letter-spacing: 1px; }
+    .kpi-card .kpi-value {
+        margin: 8px 0 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+    .kpi-card .kpi-value i {
+        font-size: 18px;
+        color: inherit;
+    }
+    .kpi-card .val { font-size: 32px; font-weight: 800; display: block; line-height: 1; }
+
+    .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 25px;
+    }
+    .chart-box {
+        padding: 25px;
+        border-radius: 20px;
+        min-height: 400px;
+        display: flex;
+        flex-direction: column;
+    }
+    .chart-box h3 {
+        margin: 0 0 20px 0;
+        font-size: 14px;
+        font-weight: 600;
+        border-bottom: 1px solid #d9e1ff;
+        padding-bottom: 12px;
+        color: #002b49 !important;
+    }
+    .full-row { grid-column: 1 / -1; min-height: 350px; }
+
+    .original-content {
+        background: #fff;
+        padding: 20px;
+        border-radius: 20px;
+        margin-top: 20px;
+    }
+
+
+    /* Tema Mobilvendor: tarjetas KPI con degradado y bordes suaves */
+    .kpi-card {
+        background: linear-gradient(148deg, #ffffff, #c9deff) !important;
+        border-top: none !important;
+        border-left: none !important;
+        border-right: none !important;
+    }
+    .chart-box { border: none !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    {% include "admin/app_list.html" with app_list=app_list %}
+</div>
+
+<div class="dashboard-wrapper">
+    <div class="kpi-row">
+        <div class="kpi-card" style="border-color: #0037ff;">
+            <h4>Total Chats</h4>
+            <div class="kpi-value" style="color: #0037ff;">
+                <i class="fa-solid fa-comments" aria-hidden="true"></i>
+                <span class="val" id="chat-total">-</span>
+            </div>
+        </div>
+        <div class="kpi-card" style="border-color: #18c86c;">
+            <h4>Total Mensajes</h4>
+            <div class="kpi-value" style="color: #18c86c;">
+                <i class="fa-solid fa-message" aria-hidden="true"></i>
+                <span class="val" id="chat-msgs">-</span>
+            </div>
+        </div>
+        <div class="kpi-card" style="border-color: #e0ac10;">
+            <h4>Usuarios Activos</h4>
+            <div class="kpi-value" style="color: #e0ac10;">
+                <i class="fa-solid fa-users" aria-hidden="true"></i>
+                <span class="val" id="chat-users">-</span>
+            </div>
+        </div>
+        <div class="kpi-card" style="border-color: #00a0df;">
+            <h4>Promedio Msgs/Chat</h4>
+            <div class="kpi-value" style="color: #00a0df;">
+                <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
+                <span class="val" id="chat-avg">-</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="charts-grid">
+        <div class="chart-box">
+            <h3>Distribución de Roles de Mensajes</h3>
+            <div style="flex:1"><canvas id="chatRoleChart"></canvas></div>
+        </div>
+        <div class="chart-box">
+            <h3>Top Usuarios por Actividad</h3>
+            <div style="flex:1"><canvas id="chatUserChart"></canvas></div>
+        </div>
+        <div class="chart-box full-row">
+            <h3>Tendencia de Conversaciones (Tiempo)</h3>
+            <div style="flex:1"><canvas id="chatTimeChart"></canvas></div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    async function loadChatStats() {
+        try {
+            const res = await fetch('chats/api/dashboard-data/');
+            const data = await res.json();
+            renderChatDashboard(data);
+        } catch (e) {
+            console.error("Error cargando chats:", e);
+        }
+    }
+
+    function renderChatDashboard(data) {
+        const chats = data.chats;
+        const totalMsgs = chats.reduce((a, b) => a + (b.msg_count || 0), 0);
+        document.getElementById('chat-total').innerText = chats.length;
+        document.getElementById('chat-msgs').innerText = totalMsgs;
+        document.getElementById('chat-users').innerText = new Set(chats.map(c => c.user__username)).size;
+        document.getElementById('chat-avg').innerText = (totalMsgs / (chats.length || 1)).toFixed(1);
+
+        Chart.defaults.color = '#5d6c7b';
+        Chart.defaults.borderColor = '#d9e1ff';
+
+        // 1. Roles
+        new Chart(document.getElementById('chatRoleChart'), {
+            type: 'doughnut',
+            data: {
+                labels: data.msg_roles.map(r => r.role),
+                datasets: [{ data: data.msg_roles.map(r => r.count), backgroundColor: ['#0037ff', '#18c86c', '#ffb200'], borderWidth: 0 }]
+            },
+            options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+        });
+
+        // 2. Users
+        const userActivity = {};
+        chats.forEach(c => { userActivity[c.user__username] = (userActivity[c.user__username] || 0) + c.msg_count; });
+        const topUsers = Object.entries(userActivity).sort((a,b) => b[1] - a[1]).slice(0, 10);
+        
+        new Chart(document.getElementById('chatUserChart'), {
+            type: 'bar',
+            data: {
+                labels: topUsers.map(u => u[0]),
+                datasets: [{ label: 'Mensajes', data: topUsers.map(u => u[1]), backgroundColor: '#0037ff', borderRadius: 4 }]
+            },
+            options: { maintainAspectRatio: false, indexAxis: 'y', scales: { x: { grid: { display: false } }, y: { grid: { display: false } } } }
+        });
+
+        // 3. Time
+        const datesMap = {};
+        chats.forEach(c => { 
+            const date = c.created_at.split('T')[0];
+            datesMap[date] = (datesMap[date] || 0) + 1;
+        });
+        const sortedDates = Object.keys(datesMap).sort();
+
+        new Chart(document.getElementById('chatTimeChart'), {
+            type: 'line',
+            data: {
+                labels: sortedDates,
+                datasets: [{ 
+                    label: 'Nuevos Chats', 
+                    data: sortedDates.map(d => datesMap[d]), 
+                    borderColor: '#18c86c', 
+                    backgroundColor: 'rgba(24, 200, 108, 0.12)', 
+                    fill: true,
+                    tension: 0.4 
+                }]
+            },
+            options: { maintainAspectRatio: false, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } }
+        });
+    }
+    window.onload = loadChatStats;
+</script>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}XIA Administration{% endblock %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'admin/custom_admin.css' %}">
+{% endblock %}
+
+{% block branding %}
+    <h1 id="site-name">
+        <a href="{% url 'admin:index' %}">
+            <img class="xia-logo" src="{% static 'brand/logo-mobilvendor.svg' %}" alt="Mobilvendor">
+            <span class="xia-divider" aria-hidden="true"></span>
+            <span class="xia-title">XIA Administration</span>
+            <span class="xia-tag">Cumplimiento IA</span>
+        </a>
+    </h1>
+{% endblock %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <link rel="icon" type="image/png" href="{% static 'brand/favicon.png' %}">
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Cambiar el título en la cabecera
+            var siteNameLink = document.querySelector('#site-name .xia-title');
+            if (siteNameLink) {
+                siteNameLink.textContent = 'XIA Administration';
+            }
+            
+            // Ocultar cualquier botón de tema
+            var themeButtons = document.querySelectorAll('[aria-label*="theme"], [aria-label*="dark"], [aria-label*="light"]');
+            themeButtons.forEach(function(btn) {
+                btn.style.display = 'none';
+            });
+        });
+    </script>
+{% endblock %}

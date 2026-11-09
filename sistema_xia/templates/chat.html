@@ -1,0 +1,116 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>XIA Financiero | Mobilvendor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="{% static 'brand/favicon.png' %}">
+  <link rel="stylesheet" href="{% static 'fontawesomefree/css/all.min.css' %}">
+  <link rel="stylesheet" href="{% static 'chat/chat.css' %}">
+</head>
+<body data-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}">
+  <div class="app-layout {% if request.user.is_authenticated %}app-layout-auth{% else %}app-layout-public{% endif %}">
+    {% if request.user.is_authenticated %}
+    <aside id="sidebar" class="history-panel" aria-label="Historial de chats">
+      <div class="history-panel-header">
+        <div>
+          <div class="sidebar-controls"><h2 class="history-kicker">Historial</h2><button id="pinSidebar" class="pin-toggle" title="Fijar barra lateral"><i class="fa-solid fa-thumbtack"></i></button></div>
+        </div>
+        <button id="newChatBtn" title="Nuevo Chat"><i class="fa fa-plus" aria-hidden="true"></i> </button>
+      </div>
+      <label class="history-search" for="chatSearchInput">
+        <span class="sr-only">Buscar chats</span>
+        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        <input id="chatSearchInput" type="search" placeholder="Busca en tus chats" autocomplete="off">
+      </label>
+      <ul id="chatList" class="history-list" aria-live="polite"></ul>
+    </aside>
+    {% endif %}
+
+    <main class="chat-shell" aria-label="Interfaz de chat IA">
+      <div class="bg-visuals" aria-hidden="true">
+        <div class="wave-line"></div>
+        <div class="wave-line"></div>
+        <div class="wave-line"></div>
+      </div>
+      <header class="topbar">
+        <div class="brand-lockup">
+          <a href="{% url 'home' %}" aria-label="Inicio"><img class="brand-logo" src="{% static 'brand/logo-mobilvendor.svg' %}" alt="Mobilvendor"></a>
+          <span class="brand-divider" aria-hidden="true"></span>
+          <div>
+            <h1>XIA Financiero</h1>
+            <p>Análisis de riesgo crediticio con IA explicable</p>
+          </div>
+        </div>
+
+        <div class="topbar-actions">
+          {% if request.user.is_authenticated %}
+            <span class="user-chip">
+              {% if request.user.first_name or request.user.last_name %}
+                {{ request.user.first_name }} {{ request.user.last_name }}
+              {% else %}
+                {{ request.user.username }}
+              {% endif %}
+            </span>
+            <form action="{% url 'logout' %}" method="post" class="logout-form">
+              {% csrf_token %}
+              <button class="topbar-button topbar-button-secondary" type="submit">Cerrar sesión</button>
+            </form>
+          {% else %}
+            <a class="topbar-button topbar-button-primary" href="{% url 'login' %}">Iniciar sesión</a>
+            <a class="topbar-button topbar-button-secondary" href="{% url 'register' %}">Registrarse</a>
+          {% endif %}
+        </div>
+      </header>
+
+      <section id="chatArea" class="chat-area" aria-live="polite">
+        <div id="welcomeState" class="welcome-state">
+          <span class="brand-kicker"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> IA explicable · EU AI Act · LOPDP</span>
+          <h1>Hola {{ request.user.username }}, soy XIA Financiero</h1>
+          <p>¿En qué te puedo ayudar hoy?</p>
+        </div>
+        <div id="messages" class="messages"></div>
+        <div id="messagesEnd" class="messages-end" aria-hidden="true"></div>
+      </section>
+
+      <form id="chatForm" class="input-dock" autocomplete="off">
+        <label for="chatInput" class="sr-only">Escribe tu mensaje</label>
+        <div class="composer">
+          <textarea id="chatInput" name="message" rows="1" placeholder="Escribe aquí..." required></textarea>
+
+          <div class="input-actions">
+            <button class="send-btn icon-only" type="submit" title="Enviar" data-tooltip="Enviar" aria-label="Enviar">
+              <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
+            </button>
+          </div>
+        </div>
+      </form>
+    </main>
+  </div>
+
+  <div id="siteModal" class="site-modal" aria-hidden="true">
+    <div class="site-modal-backdrop" data-modal-close></div>
+    <section class="site-modal-card" role="dialog" aria-modal="true" aria-labelledby="siteModalTitle" aria-describedby="siteModalMessage">
+      <div class="site-modal-header">
+        <span class="site-modal-badge"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></span>
+        <button type="button" class="site-modal-close" data-modal-close aria-label="Cerrar modal">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+      </div>
+      <h2 id="siteModalTitle" class="site-modal-title"></h2>
+      <p id="siteModalMessage" class="site-modal-message"></p>
+      <div class="site-modal-actions">
+        <button type="button" class="site-modal-button site-modal-button-secondary" data-modal-cancel>Cancelar</button>
+        <button type="button" class="site-modal-button site-modal-button-primary" data-modal-confirm>Aceptar</button>
+      </div>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="{% static 'chat/chat.js' %}"></script>
+</body>
+</html>

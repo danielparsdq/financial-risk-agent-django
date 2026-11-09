@@ -1,0 +1,214 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registrarse | XIA Financiero</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="{% static 'brand/favicon.png' %}">
+  <link rel="stylesheet" href="{% static 'fontawesomefree/css/all.min.css' %}">
+  <link rel="stylesheet" href="{% static 'chat/chat.css' %}">
+</head>
+<body class="auth-page">
+  <header class="auth-nav">
+    <a href="{% url 'home' %}" aria-label="Ir al chat"><img class="brand-logo" src="{% static 'brand/logo-mobilvendor.svg' %}" alt="Mobilvendor"></a>
+    <span class="brand-kicker"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> XIA Financiero</span>
+  </header>
+  <main class="auth-shell">
+    <section class="auth-card">
+      <div class="auth-card-header">
+        <span class="brand-kicker"><i class="fa-solid fa-chart-line" aria-hidden="true"></i> Análisis de riesgo crediticio</span>
+        <h1>Crear cuenta</h1>
+        <p>Al registrarte, tu usuario se añadirá al grupo public_user con permisos sobre Chats y Messages.</p>
+      </div>
+
+      <form method="post" class="auth-form" autocomplete="on">
+        {% csrf_token %}
+
+        {% if messages %}
+          <div class="auth-messages">
+            {% for message in messages %}
+              <div class="errorlist {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        {% if form.non_field_errors %}
+          <div class="errorlist">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <div class="form-row">
+          {{ form.username.label_tag }}
+          {{ form.username }}
+          {{ form.username.errors }}
+        </div>
+        <div class="form-row">
+          {{ form.password1.label_tag }}
+          {{ form.password1 }}
+          {{ form.password1.errors }}
+        </div>
+        <div class="form-row">
+          {{ form.password2.label_tag }}
+          {{ form.password2 }}
+          {{ form.password2.errors }}
+        </div>
+
+        <div class="form-row">
+          <label class="terms-checkbox-container" id="termsLabel">
+            <input type="checkbox" id="terms_accepted" name="terms_accepted" required disabled>
+            <span>
+              Acepto la <button type="button" class="terms-link" id="openTerms">Política de Privacidad y el Tratamiento de mis Datos Personales</button>.
+            </span>
+          </label>
+        </div>
+
+        <div class="auth-actions">
+          <button id="registerBtn" class="topbar-button topbar-button-primary btn-disabled" type="submit" disabled>Registrar</button>
+          <a class="topbar-button topbar-button-secondary" href="{% url 'login' %}">Ya tengo cuenta</a>
+        </div>
+      </form>
+
+      <p class="auth-footer">Volver al <a href="{% url 'home' %}">chat</a>.</p>
+    </section>
+  </main>
+
+  <!-- Modal para Términos y Condiciones -->
+  <div id="termsModal" class="modal-overlay">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h2>Política de Privacidad y Tratamiento de Datos</h2>
+        <button type="button" class="history-item-delete" id="closeTermsHeader" style="font-size: 1.5rem;">&times;</button>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <p><strong>Consentimiento para el Tratamiento de Datos Personales</strong></p>
+        <p>
+          Declaro haber leído y aceptado la Política de Privacidad y autorizo el registro electrónico de mi aceptación, incluyendo fecha, hora y dirección IP, como constancia de consentimiento.
+        </p>
+        <h1>TÉRMINOS Y CONDICIONES DE USO Y POLÍTICA DE PRIVACIDAD</h1>
+    
+    <h2>1. Introducción y Objeto</h2>
+    <p>El presente documento establece los Términos y Condiciones de uso del aplicativo de análisis de riesgo crediticio (en adelante, "el Sistema"), operado en la República del Ecuador. El Sistema utiliza una arquitectura de Inteligencia Artificial (IA) basada en un modelo multiagente. El uso de esta plataforma implica la aceptación expresa, libre e informada de las presentes políticas, en estricto cumplimiento con la <strong>Ley Orgánica de Protección de Datos Personales (LOPDP)</strong> de Ecuador.</p>
+
+    <h2>2. Naturaleza del Sistema y Normativa de Inteligencia Artificial</h2>
+    <p>El Sistema califica como una herramienta de <strong>alto riesgo</strong> al incidir en el perfilamiento y otorgamiento de créditos. Para garantizar los derechos del usuario, el Sistema se encuentra alineado con los estándares internacionales del <strong>Reglamento de Inteligencia Artificial de la Unión Europea (EU AI Act)</strong> y los principios de <strong>Inteligencia Artificial Explicable (XAI)</strong>. Esto garantiza que:</p>
+    <ul>
+        <li><strong>Transparencia y Explicabilidad:</strong> Los modelos algorítmicos no operan como "cajas negras". El usuario tiene derecho a recibir información clara y comprensible sobre las variables y parámetros que el Sistema consideró para determinar su perfil de riesgo.</li>
+        <li><strong>Supervisión Humana:</strong> Las decisiones generadas por el Sistema multiagente sirven como recomendaciones analíticas, estando sujetas a revisión e intervención humana en caso de controversia.</li>
+    </ul>
+
+    <h2>3. Consentimiento y Almacenamiento de Interacciones</h2>
+    <div class="highlight">
+        <p><strong>Cláusula de Monitoreo de Conversaciones:</strong> El usuario es informado y acepta expresamente que <strong>todas las conversaciones, comandos de texto, datos ingresados e interacciones</strong> mantenidas con los agentes de IA dentro de la plataforma serán grabadas y almacenadas en nuestras bases de datos. Esta información será utilizada estrictamente para fines de <strong>monitoreo de cumplimiento normativo, auditoría algorítmica, trazabilidad de decisiones y aseguramiento de calidad</strong>, conforme a lo exigido por los entes de control financiero y tecnológico.</p>
+    </div>
+
+    <h2>4. Tratamiento de Datos Personales (LOPDP)</h2>
+    <p>De conformidad con la normativa ecuatoriana, el Responsable del Tratamiento recopilará datos de identificación, financieros, crediticios y de comportamiento digital. Estos datos se procesan bajo los principios de juridicidad, pertinencia y minimización, con la finalidad exclusiva de evaluar la viabilidad crediticia y mejorar los modelos estadísticos.</p>
+
+    <h2>5. Derechos del Titular de la Información</h2>
+    <p>En aplicación del Capítulo III de la LOPDP, el usuario podrá ejercer en cualquier momento los siguientes derechos:</p>
+    <ul>
+        <li><strong>Derecho a la información, acceso y rectificación:</strong> Conocer qué datos se procesan, con qué fin, y solicitar su corrección si son inexactos.</li>
+        <li><strong>Derecho a la eliminación y oposición:</strong> Solicitar la supresión de sus datos, salvo que exista una obligación legal o contractual que exija su retención (ej. leyes de prevención de lavado de activos).</li>
+        <li><strong>Derecho a no ser objeto de una decisión basada única o parcialmente en valoraciones automatizadas (Art. 20 LOPDP):</strong> El usuario puede solicitar una explicación motivada sobre la decisión crediticia generada por el Sistema y exigir que dicha decisión sea evaluada por un operador humano.</li>
+    </ul>
+
+    <h2>6. Medidas de Seguridad</h2>
+    <p>La plataforma emplea protocolos de cifrado de extremo a extremo, anonimización y seudonimización de datos para el entrenamiento continuo de los agentes. El acceso a los registros conversacionales para cumplimiento normativo está restringido a personal de auditoría debidamente autorizado bajo estrictos acuerdos de confidencialidad.</p>
+
+    <h2>7. Jurisdicción y Ley Aplicable</h2>
+    <p>Cualquier controversia que se derive de la interpretación, aplicación o ejecución de los presentes términos se regirá por las leyes de la República del Ecuador y se someterá a la jurisdicción de los jueces competentes de la ciudad de Quito, renunciando el usuario a cualquier otro fuero.</p>
+    <p>
+          Al continuar, autorizo el tratamiento de mis datos personales y financieros, incluyendo ingresos, estado civil, cargas familiares y demás información proporcionada, con el único fin de realizar la evaluación de riesgo crediticio.
+        </p>    
+  </div>
+      <div class="modal-footer">
+        <button type="button" class="topbar-button topbar-button-secondary" id="closeTermsBtn">Cerrar</button>
+        <button type="button" class="topbar-button topbar-button-primary btn-disabled" id="acceptTermsBtn" disabled>Aceptar y Continuar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const openTerms = document.getElementById('openTerms');
+      const termsLabel = document.getElementById('termsLabel');
+      const termsModal = document.getElementById('termsModal');
+      const closeTermsHeader = document.getElementById('closeTermsHeader');
+      const closeTermsBtn = document.getElementById('closeTermsBtn');
+      const acceptTermsBtn = document.getElementById('acceptTermsBtn');
+      const modalBody = document.getElementById('modalBody');
+      const termsCheckbox = document.getElementById('terms_accepted');
+      const registerForm = document.querySelector('.auth-form');
+
+      let termsAccepted = false;
+
+      function openModal() {
+        termsModal.classList.add('is-open');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeModal() {
+        termsModal.classList.remove('is-open');
+        document.body.style.overflow = '';
+      }
+
+      // Si intentan dar click al label o al checkbox deshabilitado, abrimos los términos
+      termsLabel.addEventListener('click', function(e) {
+        if (!termsAccepted) {
+          e.preventDefault();
+          openModal();
+        }
+      });
+
+      openTerms.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation(); // Evitar que el label se lleve el evento
+        openModal();
+      });
+
+      [closeTermsHeader, closeTermsBtn].forEach(btn => {
+        btn.addEventListener('click', closeModal);
+      });
+
+      // Cerrar al hacer click fuera
+      termsModal.addEventListener('click', function(e) {
+        if (e.target === termsModal) closeModal();
+      });
+
+      // Detectar scroll hasta el final
+      modalBody.addEventListener('scroll', function() {
+        // Tolerancia para dispositivos móviles o diferentes redondeos
+        const isAtBottom = modalBody.scrollHeight - modalBody.scrollTop <= modalBody.clientHeight + 10;
+        if (isAtBottom) {
+          acceptTermsBtn.classList.remove('btn-disabled');
+          acceptTermsBtn.disabled = false;
+        }
+      });
+
+      acceptTermsBtn.addEventListener('click', function() {
+        termsAccepted = true;
+        termsCheckbox.disabled = false;
+        termsCheckbox.checked = true;
+        
+        // Habilitar el botón de Registrar
+        registerBtn.classList.remove('btn-disabled');
+        registerBtn.disabled = false;
+        
+        // Una vez aceptado, ya no es necesario prevenir el click del label
+        closeModal();
+      });
+
+      registerForm.addEventListener('submit', function(e) {
+        if (!termsCheckbox.checked) {
+          e.preventDefault();
+          alert('Debe leer y aceptar la Política de Privacidad para continuar.');
+          openModal();
+        }
+      });
+    });
+  </script>
+</body>
+</html>

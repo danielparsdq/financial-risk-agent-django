@@ -1,0 +1,327 @@
+{% extends "admin/index.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" referrerpolicy="no-referrer">
+<style>
+    /* Estructura Base Expansiva */
+    .dashboard #content {
+        display: flex !important;
+        flex-direction: row !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: transparent !important;
+        min-height: calc(100vh - 80px);
+        width: 100% !important;
+    }
+
+    #content h1 { display: none !important; }
+
+    /* Nav Sidebar (Estrecho para dar espacio) */
+    #content-main {
+        flex: 0 0 220px !important;
+        background: #ffffff !important;
+        border-right: 1px solid #d9e1ff;
+        padding: 20px !important;
+        margin: 0 !important;
+        overflow-y: auto;
+    }
+
+    #content-related { display: none !important; }
+
+    /* Dashboard (Expansión máxima) */
+    .dashboard-wrapper {
+        flex: 1 !important;
+        background: #e6f2fe !important; 
+        padding: 35px !important;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+    }
+
+    .kpi-card, .chart-box {
+        background: #ffffff !important;
+        border: 1px solid #d9e1ff !important;
+        color: #002b49;
+        box-shadow: 1px 2px 7px 1px rgba(0, 12, 162, 0.19);
+    }
+    
+    .kpi-card .val, .chart-box h3 {
+        color: #002b49 !important;
+    }
+
+    .kpi-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+    }
+    .kpi-card {
+        padding: 20px;
+        border-radius: 20px;
+        text-align: center;
+        border-bottom: 4px solid #0037ff;
+    }
+    .kpi-card h4 { margin: 0; font-size: 11px; color: #5d6c7b; text-transform: uppercase; letter-spacing: 1px; }
+    .kpi-card .kpi-value {
+        margin: 8px 0 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+    .kpi-card .kpi-value i {
+        font-size: 18px;
+        color: inherit;
+    }
+    .kpi-card .val { font-size: 32px; font-weight: 800; display: block; line-height: 1; }
+
+    /* Charts Grid - Múltiples columnas para todos los aspectos */
+    .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+        gap: 25px;
+    }
+    .charts-top-row {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 25px;
+    }
+    .chart-box {
+        padding: 25px;
+        border-radius: 20px;
+        min-height: 400px;
+        display: flex;
+        flex-direction: column;
+    }
+    .chart-box h3 {
+        margin: 0 0 20px 0;
+        font-size: 15px;
+        font-weight: 600;
+        border-bottom: 1px solid #d9e1ff;
+        padding-bottom: 12px;
+        color: #002b49 !important;
+    }
+    .full-row { grid-column: 1 / -1; min-height: 300px; }
+
+    @media (min-width: 992px) {
+        .charts-top-row {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+
+    /* Tema Mobilvendor: tarjetas KPI con degradado y bordes suaves */
+    .kpi-card {
+        background: linear-gradient(148deg, #ffffff, #c9deff) !important;
+        border-top: none !important;
+        border-left: none !important;
+        border-right: none !important;
+    }
+    .chart-box { border: none !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    {% include "admin/app_list.html" with app_list=app_list %}
+</div>
+
+<div class="dashboard-wrapper">
+    <div class="kpi-row">
+        <div class="kpi-card" style="border-color: #e5484d;">
+            <h4>Riesgo IA Crítico</h4>
+            <div class="kpi-value" style="color: #e5484d;">
+                <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+                <span class="val" id="main-kpi-risk">-</span>
+            </div>
+        </div>
+        <div class="kpi-card" style="border-color: #18c86c;">
+            <h4>Usuarios Activos</h4>
+            <div class="kpi-value" style="color: #18c86c;">
+                <i class="fa-solid fa-users" aria-hidden="true"></i>
+                <span class="val" id="main-kpi-users">-</span>
+            </div>
+        </div>
+        <div class="kpi-card" style="border-color: #e0ac10;">
+            <h4>Mensajes Totales</h4>
+            <div class="kpi-value" style="color: #e0ac10;">
+                <i class="fa-solid fa-message" aria-hidden="true"></i>
+                <span class="val" id="main-kpi-msgs">-</span>
+            </div>
+        </div>
+        <div class="kpi-card" style="border-color: #0037ff;">
+            <h4>% Mensajes Bloqueados</h4>
+            <div class="kpi-value" style="color: #0037ff;">
+                <i class="fa-solid fa-ban" aria-hidden="true"></i>
+                <span class="val" id="main-kpi-blocked">-</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="charts-top-row">
+        <!-- Gráfico 1: Riesgo -->
+        <div class="chart-box">
+            <h3>Distribución de Riesgo (EU AI Act)</h3>
+            <div style="flex:1"><canvas id="mainRiskChart"></canvas></div>
+        </div>
+        <!-- Gráfico 3: Bases Legales -->
+        <div class="chart-box">
+            <h3>Bases Legales (LOPDP Ecuador)</h3>
+            <div style="flex:1"><canvas id="legalBasisChart"></canvas></div>
+        </div>
+    </div>
+
+    <div class="charts-grid">
+        <!-- Gráfico 4: PII -->
+        <div class="chart-box">
+            <h3>Privacidad: Detección PII</h3>
+            <div style="flex:1"><canvas id="piiChart"></canvas></div>
+        </div>
+        <!-- Gráfico 5: HITL -->
+        <div class="chart-box">
+            <h3>Supervisión Humana (HITL)</h3>
+            <div style="flex:1"><canvas id="humanOversightChart"></canvas></div>
+        </div>
+        <!-- Gráfico 6: Estatus -->
+        <div class="chart-box">
+            <h3>Estado de Transacciones</h3>
+            <div style="flex:1"><canvas id="statusChart"></canvas></div>
+        </div>
+        <!-- Gráfico 7: Tendencia -->
+        <div class="chart-box full-row">
+            <h3>Mensajes Correctos vs Bloqueados (7 Días)</h3>
+            <div style="flex:1"><canvas id="mainLineChart"></canvas></div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    async function loadGlobalStats() {
+        try {
+            const [auditRes, chatRes] = await Promise.all([
+                fetch('audit/agenttransactionlog/api/data/'),
+                fetch('chats/chats/api/dashboard-data/')
+            ]);
+            const auditData = await auditRes.json();
+            const chatData = await chatRes.json();
+            renderMainDashboard(auditData, chatData);
+        } catch (e) {
+            console.error("Error cargando dashboard:", e);
+        }
+    }
+
+    function renderMainDashboard(audit, chat) {
+        document.getElementById('main-kpi-risk').innerText = audit.filter(d => d.ai_risk_level === 'high' || d.ai_risk_level === 'unacceptable').length;
+        document.getElementById('main-kpi-users').innerText = new Set(chat.chats.map(c => c.user__username)).size;
+        document.getElementById('main-kpi-msgs').innerText = chat.chats.reduce((a, b) => a + (b.msg_count || 0), 0);
+        
+        const totalAudit = audit.length || 1;
+        const blockedAudit = audit.filter(d => d.status === 'blocked' || d.status === 'failed').length;
+        const blockedPercent = ((blockedAudit / totalAudit) * 100).toFixed(1);
+        document.getElementById('main-kpi-blocked').innerText = blockedPercent + '%';
+
+        Chart.defaults.color = '#5d6c7b';
+        Chart.defaults.borderColor = '#d9e1ff';
+
+        const legalBasisLabels = {
+            consent: 'Consentimiento',
+            none_yet: 'Aún no definido',
+            legal_obligation: 'Obligación Legal',
+            public_interest: 'Interés Público/Tarea Administrativa',
+            pre_contractual: 'Fase Precontractual',
+            legitimate_interest: 'Interés Legítimo',
+            contract: 'Ejecución Contractual'
+        };
+
+        const statusLabels = {
+            success: 'Success',
+            error: 'Error',
+            blocked: 'Blocked'
+        };
+
+        const statusColors = {
+            success: '#18c86c',
+            error: '#e5484d',
+            blocked: '#ffb200'
+        };
+        
+        const agg = (data, key) => {
+            const res = {};
+            data.forEach(d => { 
+                let val = d[key];
+                // Normalizar booleanos para labels
+                if (key === 'pii_detected') val = val ? 'Privacidad: PII Detectado' : 'Seguro / Sin PII';
+                if (key === 'human_oversight') val = val ? 'Supervisado (HITL)' : 'Autónomo (Sin HITL)';
+                if (key === 'legal_basis') val = legalBasisLabels[val] || val;
+                if (key === 'status') val = statusLabels[val] || val;
+                res[val] = (res[val] || 0) + 1; 
+            });
+            return { labels: Object.keys(res), values: Object.values(res) };
+        };
+
+        const config = (id, type, labels, values, colors, isBar = false) => new Chart(document.getElementById(id), {
+            type: type,
+            data: {
+                labels: labels,
+                datasets: [{ data: values, backgroundColor: colors, borderWidth: 0, label: 'Registros', borderRadius: 4 }]
+            },
+            options: { 
+                maintainAspectRatio: false, 
+                indexAxis: isBar ? 'y' : 'x',
+                plugins: { legend: { display: !isBar, position: 'bottom' } },
+                scales: isBar ? { x: { grid: { display: false } }, y: { grid: { display: false } } } : {}
+            }
+        });
+
+        // 1. Risk
+        const risk = agg(audit, 'ai_risk_level');
+        config('mainRiskChart', 'doughnut', risk.labels, risk.values, ['#18c86c', '#e0ac10', '#ffa200', '#e5484d', '#5d6c7b']);
+
+        // 2. Roles
+        config('mainRoleChart', 'bar', chat.msg_roles.map(r => r.role), chat.msg_roles.map(r => r.count), ['#0037ff', '#18c86c', '#ffb200'], true);
+
+        // 3. Legal
+        const legal = agg(audit, 'legal_basis');
+        config('legalBasisChart', 'bar', legal.labels, legal.values, '#0037ff', true);
+
+        // 4. PII
+        const pii = agg(audit, 'pii_detected');
+        // Asegurar que 'PII Detectado' siempre sea rojo (#e5484d) y 'Seguro' sea verde (#18c86c)
+        const piiColors = pii.labels.map(l => l.includes('Detectado') ? '#e5484d' : '#18c86c');
+        config('piiChart', 'pie', pii.labels, pii.values, piiColors);
+
+        // 5. HITL
+        const human = agg(audit, 'human_oversight');
+        config('humanOversightChart', 'bar', human.labels, human.values, '#00a0df');
+
+        // 6. Execution Status
+        const status = agg(audit, 'status');
+        config('statusChart', 'bar', status.labels, status.values, status.labels.map(label => {
+            const rawValue = Object.keys(statusLabels).find(key => statusLabels[key] === label);
+            return statusColors[rawValue] || '#597dff';
+        }), true);
+
+        // 7. Trend: Correctos vs Bloqueados
+        const trendMap = {};
+        audit.forEach(d => { 
+            const date = d.created_at.split('T')[0]; 
+            if(!trendMap[date]) trendMap[date] = { ok: 0, blocked: 0 }; 
+            if(d.status === 'success' || d.status === 'completed') trendMap[date].ok++;
+            else trendMap[date].blocked++;
+        });
+        const sortedDates = Object.keys(trendMap).sort().slice(-7);
+        new Chart(document.getElementById('mainLineChart'), {
+            type: 'line',
+            data: { labels: sortedDates, datasets: [
+                { label: 'Mensajes Correctos', data: sortedDates.map(d => trendMap[d].ok), borderColor: '#18c86c', backgroundColor: 'rgba(24, 200, 108, 0.12)', fill: true, tension: 0.4 },
+                { label: 'Mensajes Bloqueados', data: sortedDates.map(d => trendMap[d].blocked), borderColor: '#e5484d', backgroundColor: 'rgba(229, 72, 77, 0.1)', fill: true, tension: 0.4 }
+            ]},
+            options: { maintainAspectRatio: false, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } }
+        });
+    }
+    window.onload = loadGlobalStats;
+</script>
+{% endblock %}

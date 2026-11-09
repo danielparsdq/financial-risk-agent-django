@@ -1,0 +1,383 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    .dashboard-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 20px;
+        padding: 20px;
+        background: #e6f2fe;
+    }
+    .chart-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 1px 2px 7px 1px rgba(0, 12, 162, 0.19);
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .chart-card h3 {
+        margin-top: 0;
+        color: #002b49;
+        font-size: 1.1rem;
+        border-bottom: 2px solid #d9e1ff;
+        width: 100%;
+        padding-bottom: 10px;
+        text-align: center;
+    }
+    .full-width {
+        grid-column: 1 / -1;
+    }
+    .stats-row {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 15px;
+    }
+    .stat-item {
+        background: #0037ff;
+        color: white;
+        padding: 15px;
+        border-radius: 20px;
+        text-align: center;
+    }
+    .stat-item div:first-child { font-size: 0.9rem; opacity: 0.9; }
+    .stat-item div:last-child { font-size: 1.5rem; font-weight: bold; }
+    
+    .filters-bar {
+        background: #fff;
+        padding: 15px 20px;
+        margin-bottom: 20px;
+        border-radius: 20px;
+        box-shadow: 1px 2px 7px 1px rgba(0, 12, 162, 0.19);
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+    #reset-filters {
+        cursor: pointer;
+        padding: 5px 15px;
+        background: #0037ff;
+        color: white;
+        border: none;
+        border-radius: 100px;
+    }
+    .chart-container {
+        position: relative;
+        height: 250px;
+        width: 100%;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content">
+    <h1>{{ title }}</h1>
+    
+    <div class="filters-bar">
+        <strong>Filtros activos:</strong>
+        <span id="active-filters-list">Ninguno</span>
+        <button id="reset-filters">Restablecer Todo</button>
+    </div>
+
+    <div class="dashboard-container">
+        <!-- Tarjetas de Resumen -->
+        <div class="stats-row">
+            <div class="stat-item" style="background: #18c86c;">
+                <div>Total Transacciones</div>
+                <div id="stat-total">0</div>
+            </div>
+            <div class="stat-item" style="background: #e5484d;">
+                <div>Detección PII</div>
+                <div id="stat-pii">0%</div>
+            </div>
+            <div class="stat-item" style="background: #f5c001; color: #002b49;">
+                <div>Consumo Prom. Tokens</div>
+                <div id="stat-tokens">0</div>
+            </div>
+            <div class="stat-item" style="background: #00a0df;">
+                <div>Supervisión Humana</div>
+                <div id="stat-human">0%</div>
+            </div>
+        </div>
+
+        <!-- Distribución de Riesgo (AI Act) -->
+        <div class="chart-card">
+            <h3>Distribución de Riesgo (AI Act)</h3>
+            <div class="chart-container">
+                <canvas id="riskChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Estado de Transacciones -->
+        <div class="chart-card">
+            <h3>Estado de Transacciones</h3>
+            <div class="chart-container">
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Base Legal (LOPDP) -->
+        <div class="chart-card">
+            <h3>Bases Legales (LOPDP)</h3>
+            <div class="chart-container">
+                <canvas id="legalChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Volumen por Agente -->
+        <div class="chart-card">
+            <h3>Volumen por Agente</h3>
+            <div class="chart-container">
+                <canvas id="agentChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Histórico de Transacciones -->
+        <div class="chart-card full-width">
+            <h3>Tendencia de Auditoría (Diaria)</h3>
+            <div class="chart-container" style="height: 300px;">
+                <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const rawData = {{ logs_json|safe }};
+    const legalBasisLabels = {{ legal_basis_labels_json|safe }};
+    const legalBasisReverseLabels = Object.fromEntries(
+        Object.entries(legalBasisLabels).map(([value, label]) => [label, value])
+    );
+
+    const statusLabels = {
+        success: 'Success',
+        error: 'Error',
+        blocked: 'Blocked'
+    };
+
+    const statusColors = {
+        success: '#18c86c',
+        error: '#e5484d',
+        blocked: '#ffb200'
+    };
+
+    let filters = {
+        ai_risk_level: null,
+        status: null,
+        legal_basis: null,
+        agent_name: null
+    };
+
+    let charts = {};
+
+    function processData() {
+        let filtered = rawData.filter(item => {
+            return (!filters.ai_risk_level || item.ai_risk_level === filters.ai_risk_level) &&
+                   (!filters.status || item.status === filters.status) &&
+                   (!filters.legal_basis || item.legal_basis === filters.legal_basis) &&
+                   (!filters.agent_name || item.agent_name === filters.agent_name);
+        });
+
+        // Stats update
+        document.getElementById('stat-total').innerText = filtered.length;
+        const piiCount = filtered.filter(i => i.pii_detected).length;
+        document.getElementById('stat-pii').innerText = filtered.length ? Math.round((piiCount/filtered.length)*100) + '%' : '0%';
+        const avgTokens = filtered.length ? Math.round(filtered.reduce((acc, i) => acc + (i.token_usage || 0), 0) / filtered.length) : 0;
+        document.getElementById('stat-tokens').innerText = avgTokens;
+        const humanCount = filtered.filter(i => i.human_oversight).length;
+        document.getElementById('stat-human').innerText = filtered.length ? Math.round((humanCount/filtered.length)*100) + '%' : '0%';
+
+        // Filter list text
+        const active = Object.entries(filters).filter(([k, v]) => v).map(([k, v]) => {
+            const label = k === 'legal_basis' ? (legalBasisLabels[v] || v) : v;
+            if (k === 'status') {
+                return `${k}: ${statusLabels[v] || v}`;
+            }
+            return `${k}: ${label}`;
+        }).join(', ');
+        document.getElementById('active-filters-list').innerText = active || 'Ninguno';
+
+        return filtered;
+    }
+
+    function getAggregated(data, field) {
+        const counts = {};
+        data.forEach(item => {
+            let val = item[field] || 'N/A';
+            if (field === 'status') {
+                val = statusLabels[val] || val;
+            }
+            counts[val] = (counts[val] || 0) + 1;
+        });
+        return {
+            labels: Object.keys(counts),
+            values: Object.values(counts)
+        };
+    }
+
+    function getAggregatedWithLabels(data, field, labelMap) {
+        const aggregated = getAggregated(data, field);
+        return {
+            labels: aggregated.labels.map(value => labelMap[value] || value),
+            values: aggregated.values
+        };
+    }
+
+    function getFilterValue(field, label) {
+        if (field === 'legal_basis') {
+            return legalBasisReverseLabels[label] || label;
+        }
+        return label;
+    }
+
+    function initCharts() {
+        const data = processData();
+
+        // Risk Chart
+        const riskData = getAggregated(data, 'ai_risk_level');
+        charts.risk = new Chart(document.getElementById('riskChart'), {
+            type: 'doughnut',
+            data: {
+                labels: riskData.labels,
+                datasets: [{ data: riskData.values, backgroundColor: ['#18c86c', '#f5c001', '#ffa200', '#e5484d'] }]
+            },
+            options: { 
+                onClick: (e, items) => chartClick(items, 'riskChart', 'ai_risk_level'),
+                maintainAspectRatio: false 
+            }
+        });
+
+        // Status Chart
+        const statusData = getAggregated(data, 'status');
+        const statusChartColors = statusData.labels.map(label => {
+            const rawValue = Object.keys(statusLabels).find(key => statusLabels[key] === label);
+            return statusColors[rawValue] || '#5d6c7b';
+        });
+        charts.status = new Chart(document.getElementById('statusChart'), {
+            type: 'pie',
+            data: {
+                labels: statusData.labels,
+                datasets: [{ data: statusData.values, backgroundColor: statusChartColors }]
+            },
+            options: { 
+                onClick: (e, items) => chartClick(items, 'statusChart', 'status'),
+                maintainAspectRatio: false 
+            }
+        });
+
+        // Legal Basis Chart
+        const legalData = getAggregatedWithLabels(data, 'legal_basis', legalBasisLabels);
+        charts.legal = new Chart(document.getElementById('legalChart'), {
+            type: 'bar',
+            data: {
+                labels: legalData.labels,
+                datasets: [{ label: 'Casos', data: legalData.values, backgroundColor: '#00a0df' }]
+            },
+            options: { 
+                indexAxis: 'y',
+                onClick: (e, items) => chartClick(items, 'legalChart', 'legal_basis'),
+                maintainAspectRatio: false 
+            }
+        });
+
+        // Agent Chart
+        const agentData = getAggregated(data, 'agent_name');
+        charts.agent = new Chart(document.getElementById('agentChart'), {
+            type: 'bar',
+            data: {
+                labels: agentData.labels,
+                datasets: [{ label: 'Tickets', data: agentData.values, backgroundColor: '#54c1e0' }]
+            },
+            options: { 
+                onClick: (e, items) => chartClick(items, 'agentChart', 'agent_name'),
+                maintainAspectRatio: false 
+            }
+        });
+
+        // Trend Chart
+        updateTrendChart(data);
+    }
+
+    function updateTrendChart(data) {
+        const days = {};
+        data.forEach(item => {
+            const date = item.created_at.split('T')[0];
+            days[date] = (days[date] || 0) + 1;
+        });
+        const sortedDays = Object.keys(days).sort();
+        const trendValues = sortedDays.map(d => days[d]);
+
+        if (charts.trend) {
+            charts.trend.data.labels = sortedDays;
+            charts.trend.data.datasets[0].data = trendValues;
+            charts.trend.update();
+        } else {
+            charts.trend = new Chart(document.getElementById('trendChart'), {
+                type: 'line',
+                data: {
+                    labels: sortedDays,
+                    datasets: [{ label: 'Volumen Diario', data: trendValues, borderColor: '#0037ff', fill: true, backgroundColor: 'rgba(0, 55, 255, 0.1)' }]
+                },
+                options: { maintainAspectRatio: false }
+            });
+        }
+    }
+
+    function chartClick(items, chartId, filterKey) {
+        if (items.length > 0) {
+            const index = items[0].index;
+            const label = charts[filterKey.split('_')[0]].data.labels[index];
+            filters[filterKey] = getFilterValue(filterKey, label);
+            refreshAll();
+        }
+    }
+
+    function refreshAll() {
+        const data = processData();
+        
+        // Update all charts except the one clicked? No, Power BI updates all.
+        // Risk
+        const riskD = getAggregated(data, 'ai_risk_level');
+        charts.risk.data.labels = riskD.labels;
+        charts.risk.data.datasets[0].data = riskD.values;
+        charts.risk.update();
+
+        // Status
+        const statusD = getAggregated(data, 'status');
+        charts.status.data.labels = statusD.labels;
+        charts.status.data.datasets[0].data = statusD.values;
+        charts.status.data.datasets[0].backgroundColor = statusD.labels.map(label => {
+            const rawValue = Object.keys(statusLabels).find(key => statusLabels[key] === label);
+            return statusColors[rawValue] || '#5d6c7b';
+        });
+        charts.status.update();
+
+        // Legal
+        const legalD = getAggregatedWithLabels(data, 'legal_basis', legalBasisLabels);
+        charts.legal.data.labels = legalD.labels;
+        charts.legal.data.datasets[0].data = legalD.values;
+        charts.legal.update();
+
+        // Agent
+        const agentD = getAggregated(data, 'agent_name');
+        charts.agent.data.labels = agentD.labels;
+        charts.agent.data.datasets[0].data = agentD.values;
+        charts.agent.update();
+
+        updateTrendChart(data);
+    }
+
+    document.getElementById('reset-filters').onclick = () => {
+        filters = { ai_risk_level: null, status: null, legal_basis: null, agent_name: null };
+        refreshAll();
+    };
+
+    window.onload = initCharts;
+</script>
+{% endblock %}

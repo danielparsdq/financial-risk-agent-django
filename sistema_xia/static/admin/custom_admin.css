@@ -1,0 +1,427 @@
+/* =========================================================
+   XIA Admin — tema visual inspirado en mobilvendor.com
+   Se sobrescriben las variables CSS del admin de Django y se
+   fuerza el modo claro (el selector de tema está oculto).
+   ========================================================= */
+:root,
+html[data-theme="auto"],
+html[data-theme="dark"],
+html[data-theme="light"] {
+    /* Paleta Mobilvendor */
+    --mv-light-blue: #e6f2fe;
+    --mv-extra-light-blue: #e6ebff;
+    --mv-blue-white: #eaf2ff;
+    --mv-blue-spark-light: #d9e1ff;
+    --mv-card-gradient-end: #c9deff;
+    --mv-dark-blue: #002b49;
+    --mv-electric-blue: #0037ff;
+    --mv-electric-blue-active: #0028ba;
+    --mv-cyan: #00a0df;
+    --mv-green: #18c86c;
+    --mv-yellow: #f5c001;
+    --mv-grey-text: #5d6c7b;
+    --mv-border: #dbdbdb;
+    --mv-shadow-card: 1px 2px 7px 1px rgba(0, 12, 162, 0.19);
+
+    /* Variables del admin de Django */
+    --primary: var(--mv-electric-blue);
+    --secondary: var(--mv-electric-blue);
+    --accent: var(--mv-yellow);
+    --primary-fg: #ffffff;
+
+    --body-fg: var(--mv-dark-blue);
+    --body-bg: var(--mv-light-blue);
+    --body-quiet-color: var(--mv-grey-text);
+    --body-medium-color: var(--mv-dark-blue);
+    --body-loud-color: var(--mv-dark-blue);
+
+    --header-color: var(--mv-dark-blue);
+    --header-branding-color: var(--mv-dark-blue);
+    --header-bg: #ffffff;
+    --header-link-color: var(--mv-dark-blue);
+
+    --breadcrumbs-fg: var(--mv-grey-text);
+    --breadcrumbs-link-fg: var(--mv-electric-blue);
+    --breadcrumbs-bg: #ffffff;
+
+    --link-fg: var(--mv-electric-blue);
+    --link-hover-color: var(--mv-electric-blue-active);
+    --link-selected-fg: var(--mv-electric-blue-active);
+
+    --hairline-color: var(--mv-blue-spark-light);
+    --border-color: var(--mv-border);
+
+    --error-fg: #ba2121;
+    --message-success-bg: #def2ed;
+    --message-warning-bg: #fff6d6;
+    --message-error-bg: #ffdede;
+
+    --darkened-bg: var(--mv-blue-white);
+    --selected-bg: var(--mv-extra-light-blue);
+    --selected-row: var(--mv-extra-light-blue);
+
+    --button-fg: #ffffff;
+    --button-bg: var(--mv-electric-blue);
+    --button-hover-bg: var(--mv-electric-blue-active);
+    --default-button-bg: var(--mv-electric-blue);
+    --default-button-hover-bg: var(--mv-electric-blue-active);
+    --close-button-bg: var(--mv-grey-text);
+    --close-button-hover-bg: var(--mv-dark-blue);
+    --delete-button-bg: #e5484d;
+    --delete-button-hover-bg: #b4232a;
+
+    --object-tools-fg: #ffffff;
+    --object-tools-bg: var(--mv-electric-blue);
+    --object-tools-hover-bg: var(--mv-electric-blue-active);
+
+    --font-family-primary: "Poppins", Arial, sans-serif;
+
+    color-scheme: light;
+}
+
+body {
+    font-family: var(--font-family-primary);
+    background: var(--body-bg);
+    color: var(--body-fg);
+}
+
+/* ---------- Cabecera: nav blanca con sombra ---------- */
+#header {
+    background: #ffffff !important;
+    color: var(--mv-dark-blue) !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    padding: 12px 40px;
+    position: relative;
+    z-index: 20;
+}
+
+#branding h1,
+#site-name {
+    margin: 0;
+}
+
+#site-name a {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    color: var(--mv-dark-blue) !important;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+#site-name .xia-logo {
+    height: 28px;
+    width: auto;
+    display: block;
+}
+
+#site-name .xia-divider {
+    width: 1px;
+    height: 28px;
+    background: var(--mv-border);
+}
+
+#site-name .xia-tag {
+    padding: 4px 12px;
+    border-radius: 100px;
+    background: var(--mv-extra-light-blue);
+    color: var(--mv-electric-blue);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+#user-tools {
+    color: var(--mv-grey-text);
+    font-weight: 300;
+}
+
+#user-tools a,
+#logout-form button {
+    color: var(--mv-dark-blue) !important;
+    border-bottom: none !important;
+    font-weight: 500;
+}
+
+#user-tools a:hover,
+#logout-form button:hover {
+    color: var(--mv-electric-blue) !important;
+    text-decoration: none;
+}
+
+/* ---------- Breadcrumbs ---------- */
+div.breadcrumbs {
+    background: #ffffff;
+    color: var(--mv-grey-text);
+    border-bottom: 1px solid var(--mv-blue-spark-light);
+    padding: 12px 40px;
+}
+
+div.breadcrumbs a {
+    color: var(--mv-electric-blue) !important;
+}
+
+/* ---------- Ocultar el botón de cambio de tema ---------- */
+#theme-toggle-btn,
+[aria-label="Toggle dark mode"],
+[aria-label="Toggle light mode"],
+.theme-toggle,
+button.theme-toggle,
+.dark-mode-toggle {
+    display: none !important;
+}
+
+/* ---------- Tarjetas / módulos ---------- */
+.module {
+    background: #ffffff;
+    border-radius: 20px !important;
+    overflow: hidden !important;
+    box-shadow: var(--mv-shadow-card);
+    border: none !important;
+}
+
+.module h2,
+.module caption,
+.inline-group h2 {
+    background: var(--mv-electric-blue) !important;
+    color: #ffffff !important;
+    padding: 12px 18px !important;
+    margin: 0 !important;
+    border: none !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.02em;
+    text-transform: none;
+}
+
+.module h2 a,
+.module caption a {
+    color: #ffffff !important;
+    text-decoration: none !important;
+    font-weight: 500 !important;
+}
+
+.module h2 a:hover,
+.module caption a:hover {
+    color: #ffffff !important;
+    text-decoration: underline !important;
+}
+
+.module table th a,
+.module table td a {
+    text-decoration: none !important;
+}
+
+.module tr:hover td,
+.module tr:hover th {
+    background: var(--mv-blue-white);
+}
+
+/* ---------- Enlaces ---------- */
+#content a:link,
+#content a:visited {
+    color: var(--mv-electric-blue);
+}
+
+#content a:hover,
+#content a:focus {
+    color: var(--mv-electric-blue-active);
+}
+
+a.addlink,
+a.changelink,
+a.viewlink {
+    font-weight: 500;
+}
+
+/* ---------- Botones píldora ---------- */
+input[type="submit"],
+input[type="button"],
+.button,
+a.button,
+.submit-row input,
+.submit-row a.button {
+    background: var(--mv-electric-blue) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 100px !important;
+    padding: 10px 22px !important;
+    height: auto !important;
+    font-family: var(--font-family-primary) !important;
+    font-weight: 500 !important;
+    transition: background 0.3s cubic-bezier(.165, .84, .44, 1);
+}
+
+input[type="submit"]:hover,
+input[type="button"]:hover,
+.button:hover,
+a.button:hover,
+.submit-row input:hover {
+    background: var(--mv-electric-blue-active) !important;
+}
+
+.submit-row {
+    background: #ffffff;
+    border: none;
+    border-radius: 20px;
+    box-shadow: var(--mv-shadow-card);
+    padding: 14px 18px;
+}
+
+.submit-row a.deletelink {
+    border-radius: 100px;
+    padding: 10px 22px;
+    height: auto;
+}
+
+.object-tools a:link,
+.object-tools a:visited {
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+/* ---------- Formularios ---------- */
+input[type="text"],
+input[type="password"],
+input[type="email"],
+input[type="url"],
+input[type="number"],
+input[type="search"],
+input[type="tel"],
+textarea,
+select,
+.vTextField {
+    border: 1px solid var(--mv-border) !important;
+    border-radius: 6px !important;
+    font-family: var(--font-family-primary);
+    color: var(--mv-dark-blue);
+    background: #ffffff;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+    border-color: var(--mv-electric-blue) !important;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 55, 255, 0.12);
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+    accent-color: var(--mv-electric-blue) !important;
+}
+
+/* ---------- Listados ---------- */
+#changelist .actions {
+    background: #ffffff;
+    border-radius: 14px;
+    border: none;
+    padding: 10px 14px;
+}
+
+#changelist-filter {
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: var(--mv-shadow-card);
+    overflow: hidden;
+}
+
+#changelist-filter h2 {
+    background: var(--mv-electric-blue);
+    color: #ffffff;
+}
+
+#changelist-filter li.selected a {
+    color: var(--mv-electric-blue) !important;
+    font-weight: 600;
+}
+
+thead th,
+tfoot td {
+    background: var(--mv-blue-white);
+    color: var(--mv-dark-blue);
+}
+
+.selected,
+tr.selected td,
+tr.selected th {
+    background-color: var(--mv-extra-light-blue) !important;
+}
+
+.paginator a:link,
+.paginator a:visited {
+    background: var(--mv-electric-blue);
+    color: #ffffff !important;
+    border-radius: 100px;
+}
+
+/* ---------- Mensajes ---------- */
+ul.messagelist li {
+    border-radius: 12px;
+    margin: 0 0 10px;
+    color: var(--mv-dark-blue);
+}
+
+/* ---------- Sidebar de navegación ---------- */
+#nav-sidebar {
+    background: #ffffff;
+    border-right: 1px solid var(--mv-blue-spark-light);
+}
+
+#nav-sidebar .current-app .section:link,
+#nav-sidebar .current-app .section:visited {
+    color: #ffffff !important;
+}
+
+#nav-sidebar .current-model {
+    background: var(--mv-extra-light-blue);
+}
+
+#toggle-nav-sidebar {
+    background: #ffffff;
+    color: var(--mv-electric-blue);
+    border-right: 1px solid var(--mv-blue-spark-light);
+}
+
+/* ---------- Login del admin ---------- */
+.login #container {
+    border-radius: 25px !important;
+    border-radius: 25px;
+    box-shadow: var(--mv-shadow-card);
+    overflow: hidden;
+    border: none;
+}
+
+.login #header {
+    box-shadow: none;
+    border-bottom: 1px solid var(--mv-blue-spark-light);
+    padding: 18px 24px;
+}
+
+.login #site-name a {
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.login #site-name .xia-divider,
+.login #site-name .xia-tag {
+    display: none;
+}
+
+.login #content {
+    background: #ffffff;
+}
+
+.login .submit-row {
+    background: transparent;
+    box-shadow: none;
+    padding: 10px 0 0;
+}
+
+.login .submit-row input {
+    width: 100%;
+}
